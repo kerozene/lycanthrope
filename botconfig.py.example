@@ -36,4 +36,4 @@ args = parser.parse_args()
 DEBUG_MODE = args.debug if not DISABLE_DEBUG_MODE else False
 VERBOSE_MODE = args.verbose
 
-DEFAULT_MODULE = "sabotage" if args.sabotage else "wolfgame"
+DEFAULT_MODULE = "mystats" if args.stats else "wolfgame"
