@@ -1691,7 +1691,7 @@ def shoot(cli, nick, chann_, rest):
                            "but was accidentally fatally injured.").format(victim))
             var.LOGGER.logMessage("{0} is not a wolf but was accidentally fatally injured.".format(victim))
             if victimrole == "traitor":
-                cli.msg(chan, "The village has scarificed a \u0002villager\u0002.")
+                cli.msg(chan, "The village has sacrificed a \u0002villager\u0002.")
                 var.LOGGER.logMessage("The village has sacrificed a villager.")
             else:
                 cli.msg(chan, "The village has sacrificed a \u0002{0}\u0002.".format(victimrole))
