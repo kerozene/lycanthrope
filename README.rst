@@ -27,3 +27,7 @@ Debug mode can be enabled with the ``--debug`` argument::
 Verbose logging can be enabled with the ``--verbose`` argument::
 
     $ ./wolfbot.py --verbose
+
+Stats mode can be enabled with the ``--stats`` argument::
+
+    $ ./wolfbot.py --stats
