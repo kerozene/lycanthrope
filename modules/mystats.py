@@ -30,11 +30,19 @@ def connect_callback(cli):
     
     var.LAST_STATS = None
 
-@pmcmd("mystats", "")
+@pmcmd("fdie", "fbye", admin_only=True)
+@cmd("fdie", "fbye", admin_only=True)
+def forced_exit(cli, nick, *rest):  # Admin Only
+    """Forces the bot to close"""
+
+    cli.quit("Forced quit from "+nick)
+    raise SystemExit
+    
+@pmcmd("mystats")
 def get_my_stats_pm(cli, nick, rest):
     get_my_stats(cli, nick, "", rest)
 
-@cmd("mystats", "lycanstats")
+@cmd("mystats")
 def get_my_stats(cli, nick, chan, rest):
     """Get my stats of how good I really am/was."""
     rest = rest.strip()
@@ -42,7 +50,6 @@ def get_my_stats(cli, nick, chan, rest):
         cli.notice(nick, "Supply a role name.")
     
     var.CONN = sqlite3.connect(var.NAME, check_same_thread = False)
-    var.CONN.text_factory = bytes
     
     with var.CONN:
         c = var.CONN.cursor()
@@ -55,7 +62,6 @@ def get_my_stats(cli, nick, chan, rest):
 def load_saved_settings(nam):
     
     var.CONN = sqlite3.connect(nam, check_same_thread = False)
-    var.CONN.text_factory = bytes
 
     with var.CONN:
         c = var.CONN.cursor()

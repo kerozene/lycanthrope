@@ -1005,9 +1005,14 @@ def reaper(cli, gameid):
                 for nck in to_kill:
                     if nck not in var.list_players():
                         continue
-                    cli.msg(chan, ("\u0002{0}\u0002 didn't get out of bed "+
-                        "for a very long time. S/He is declared dead. Appears "+
-                        "(s)he was a \u0002{1}\u0002.").format(nck, var.get_role(nck)))
+                    if var.get_role(nck) == "traitor":
+                        cli.msg(chan, ("\u0002{0}\u0002 didn't get out of bed "+
+                            "for a very long time. S/He is declared dead. Appears "+
+                            "(s)he was a \u0002{1}\u0002.").format(nck, "villager"))
+                    else:
+                        cli.msg(chan, ("\u0002{0}\u0002 didn't get out of bed "+
+                            "for a very long time. S/He is declared dead. Appears "+
+                            "(s)he was a \u0002{1}\u0002.").format(nck, var.get_role(nck)))
                     make_stasis(nck, var.IDLE_STASIS_PENALTY)
                     if not del_player(cli, nck):
                         return
@@ -1020,15 +1025,23 @@ def reaper(cli, gameid):
             for dcedplayer in list(var.DISCONNECTED.keys()):
                 _, timeofdc, what = var.DISCONNECTED[dcedplayer]
                 if what == "quit" and (datetime.now() - timeofdc) > timedelta(seconds=var.QUIT_GRACE_TIME):
-                    cli.msg(chan, ("\02{0}\02 died due to a fatal attack by wild animals. Appears (s)he "+
+                    if var.get_role(dcedplayer) == "traitor":
+                        cli.msg(chan, ("\02{0}\02 died due to a fatal attack by wild animals. Appears (s)he "+
+                                   "was a \02{1}\02.").format(dcedplayer, "villager"))
+                    else:
+                        cli.msg(chan, ("\02{0}\02 died due to a fatal attack by wild animals. Appears (s)he "+
                                    "was a \02{1}\02.").format(dcedplayer, var.get_role(dcedplayer)))
                     if var.PHASE != "join":
                         make_stasis(dcedplayer, var.PART_STASIS_PENALTY)
                     if not del_player(cli, dcedplayer, devoice = False):
                         return
                 elif what == "part" and (datetime.now() - timeofdc) > timedelta(seconds=var.PART_GRACE_TIME):
-                    cli.msg(chan, ("\02{0}\02 died due to eating poisonous berries.  Appears (s)he was "+
-                                   "a \02{1}\02.").format(dcedplayer, var.get_role(dcedplayer)))
+                    if var.get_role(dcedplayer) == "traitor":
+                        cli.msg(chan, ("\02{0}\02 died due to eating poisonous berries.  Appears (s)he was "+
+                                       "a \02{1}\02.").format(dcedplayer, "villager"))
+                    else:
+                        cli.msg(chan, ("\02{0}\02 died due to eating poisonous berries.  Appears (s)he was "+
+                                       "a \02{1}\02.").format(dcedplayer, var.get_role(dcedplayer)))
                     if var.PHASE != "join":
                         make_stasis(dcedplayer, var.PART_STASIS_PENALTY)
                     if not del_player(cli, dcedplayer, devoice = False):
@@ -1114,8 +1127,7 @@ def goat(cli, nick, chan, rest):
             return
     victim = ul[ull.index(victim)]
     cli.msg(botconfig.CHANNEL, ("\u0002{0}\u0002's goat walks by "+
-                                "and kicks \u0002{1}\u0002.").format(nick,
-                                                                     victim))
+                                "and kicks \u0002{1}\u0002.").format(nick, victim))
     var.LOGGER.logMessage("{0}'s goat walks by and kicks {1}.".format(nick, victim))
     var.GOATED = True
     
@@ -1228,11 +1240,19 @@ def leave(cli, what, nick, why=""):
     #  the player who just quit was in the game
     killhim = True
     if what == "part" and (not var.PART_GRACE_TIME or var.PHASE == "join"):
-        msg = ("\02{0}\02 died due to eating poisonous berries. Appears "+
-               "(s)he was a \02{1}\02.").format(nick, var.get_role(nick))
+        if var.get_role(nick) == "traitor":
+            msg = ("\02{0}\02 died due to eating poisonous berries. Appears "+
+                   "(s)he was a \02{1}\02.").format(nick, "villager")
+        else:
+            msg = ("\02{0}\02 died due to eating poisonous berries. Appears "+
+                   "(s)he was a \02{1}\02.").format(nick, var.get_role(nick))
     elif what == "quit" and (not var.QUIT_GRACE_TIME or var.PHASE == "join"):
-        msg = ("\02{0}\02 died due to a fatal attack by wild animals. Appears "+
-               "(s)he was a \02{1}\02.").format(nick, var.get_role(nick))
+        if var.get_role(nick) == "traitor":
+            msg = ("\02{0}\02 died due to a fatal attack by wild animals. Appears "+
+                   "(s)he was a \02{1}\02.").format(nick, "villager")
+        else:
+            msg = ("\02{0}\02 died due to a fatal attack by wild animals. Appears "+
+                   "(s)he was a \02{1}\02.").format(nick, var.get_role(nick))
     elif what != "kick":
         msg = "\u0002{0}\u0002 has gone missing.".format(nick)
         try:
@@ -1278,10 +1298,16 @@ def leave_game(cli, nick, chan, rest):
     if nick not in var.list_players() or nick in var.DISCONNECTED.keys():  # not playing
         cli.notice(nick, "You're not currently playing.")
         return
-    cli.msg(botconfig.CHANNEL, ("\02{0}\02 died of an unknown disease. "+
-                                "S/He was a \02{1}\02.").format(nick, var.get_role(nick)))
-    var.LOGGER.logMessage(("{0} died of an unknown disease. "+
-                           "S/He was a {1}.").format(nick, var.get_role(nick)))
+    if var.get_role(nick) == "traitor":
+        cli.msg(botconfig.CHANNEL, ("\02{0}\02 died of an unknown disease. "+
+                                    "S/He was a \02{1}\02.").format(nick, "villager"))
+        var.LOGGER.logMessage(("{0} died of an unknown disease. "+
+                               "S/He was a {1}.").format(nick, "villager"))
+    else:
+        cli.msg(botconfig.CHANNEL, ("\02{0}\02 died of an unknown disease. "+
+                                    "S/He was a \02{1}\02.").format(nick, var.get_role(nick)))
+        var.LOGGER.logMessage(("{0} died of an unknown disease. "+
+                               "S/He was a {1}.").format(nick, var.get_role(nick)))
 
     if var.PHASE != "join":
         make_stasis(nick, var.LEAVE_STASIS_PENALTY)
@@ -1700,8 +1726,8 @@ def shoot(cli, nick, chann_, rest):
                            "but was accidentally fatally injured.").format(victim))
             var.LOGGER.logMessage("{0} is not a wolf but was accidentally fatally injured.".format(victim))
             if victimrole == "traitor":
-                cli.msg(chan, "The village has sacrificed a \u0002villager\u0002.")
-                var.LOGGER.logMessage("The village has sacrificed a villager.")
+                cli.msg(chan, "The village has sacrificed a \u0002{0}\u0002.".format("villager"))
+                var.LOGGER.logMessage("The village has sacrificed a {0}.".format("villager"))
             else:
                 cli.msg(chan, "The village has sacrificed a \u0002{0}\u0002.".format(victimrole))
                 var.LOGGER.logMessage("The village has sacrificed a {0}.".format(victimrole))
@@ -1731,9 +1757,9 @@ def shoot(cli, nick, chann_, rest):
     else:
         if var.get_role(nick) == "traitor":
             cli.msg(chan, ("Oh no! \u0002{0}\u0002's gun was poorly maintained and has exploded! "+
-                       "The village mourns a gunner-\u0002villager\u0002.").format(nick))
+                       "The village mourns a gunner-\u0002{1}\u0002.").format(nick, "villager"))
             var.LOGGER.logMessage(("Oh no! {0}'s gun was poorly maintained and has exploded! "+
-						   "The village mourns a gunner-villager.").format(nick))
+						   "The village mourns a gunner-{1}.").format(nick, "villager"))
         else:
             cli.msg(chan, ("Oh no! \u0002{0}\u0002's gun was poorly maintained and has exploded! "+
                            "The village mourns a gunner-\u0002{1}\u0002.").format(nick, var.get_role(nick)))
