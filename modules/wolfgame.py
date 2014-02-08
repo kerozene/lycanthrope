@@ -565,8 +565,15 @@ def stats(cli, nick, chan, rest):
         vb = "are"
     else:
         vb = "is"
+    hasTraitor = False
     for role in rs:
         count = len(var.ROLES[role])
+        if role == "traitor":
+            if count == 1:
+                hasTraitor = True
+            continue
+        elif role == "villager" and hasTraitor:
+            count += 1
         if count > 1 or count == 0:
             message.append("\u0002{0}\u0002 {1}".format(count if count else "\u0002no\u0002", var.plural(role)))
         else:
@@ -663,7 +670,10 @@ def chk_decision(cli):
     votesneeded = avail // 2 + 1
     for votee, voters in iter(var.VOTES.items()):
         if len(voters) >= votesneeded:
-            lmsg = random.choice(var.LYNCH_MESSAGES).format(votee, var.get_role(votee))
+            if var.get_role(votee) == "traitor":
+                lmsg = random.choice(var.LYNCH_MESSAGES).format(votee, "villager")
+            else:
+                lmsg = random.choice(var.LYNCH_MESSAGES).format(votee, var.get_role(votee))
             cli.msg(botconfig.CHANNEL, lmsg)
             var.LOGGER.logMessage(lmsg.replace("\02", ""))
             var.LOGGER.logBare(votee, "LYNCHED")
@@ -1679,9 +1689,13 @@ def shoot(cli, nick, chann_, rest):
         elif random.random() <= var.MANSLAUGHTER_CHANCE:
             cli.msg(chan, ("\u0002{0}\u0002 is a not a wolf "+
                            "but was accidentally fatally injured.").format(victim))
-            cli.msg(chan, "The village has sacrificed a \u0002{0}\u0002.".format(victimrole))
             var.LOGGER.logMessage("{0} is not a wolf but was accidentally fatally injured.".format(victim))
-            var.LOGGER.logMessage("The village has sacrificed a {0}.".format(victimrole))
+            if victimrole == "traitor":
+                cli.msg(chan, "The village has scarificed a \u0002villager\u0002.")
+                var.LOGGER.logMessage("The village has sacrificed a villager.")
+            else:
+                cli.msg(chan, "The village has sacrificed a \u0002{0}\u0002.".format(victimrole))
+                var.LOGGER.logMessage("The village has sacrificed a {0}.".format(victimrole))
             if not del_player(cli, victim):
                 return
         else:
@@ -1706,10 +1720,16 @@ def shoot(cli, nick, chann_, rest):
         cli.msg(chan, "\u0002{0}\u0002 is a lousy shooter and missed!".format(nick))
         var.LOGGER.logMessage("{0} is a lousy shooter and missed!".format(nick))
     else:
-        cli.msg(chan, ("Oh no! \u0002{0}\u0002's gun was poorly maintained and has exploded! "+
-                       "The village mourns a gunner-\u0002{1}\u0002.").format(nick, var.get_role(nick)))
-        var.LOGGER.logMessage(("Oh no! {0}'s gun was poorly maintained and has exploded! "+
-                       "The village mourns a gunner-{1}.").format(nick, var.get_role(nick)))
+        if var.get_role(nick) == "traitor":
+            cli.msg(chan, ("Oh no! \u0002{0}\u0002's gun was poorly maintained and has exploded! "+
+                       "The village mourns a gunner-\u0002villager\u0002.").format(nick))
+            var.LOGGER.logMessage(("Oh no! {0}'s gun was poorly maintained and has exploded! "+
+						   "The village mourns a gunner-villager.").format(nick))
+        else:
+            cli.msg(chan, ("Oh no! \u0002{0}\u0002's gun was poorly maintained and has exploded! "+
+                           "The village mourns a gunner-\u0002{1}\u0002.").format(nick, var.get_role(nick)))
+            var.LOGGER.logMessage(("Oh no! {0}'s gun was poorly maintained and has exploded! "+
+                                  "The village mourns a gunner-{1}.").format(nick, var.get_role(nick)))
         if not del_player(cli, nick):
             return  # Someone won.
 
